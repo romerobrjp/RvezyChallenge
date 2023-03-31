@@ -27,4 +27,7 @@ public class Listing
     [Required]
     [JsonProperty("property_type")]
     public PropertyTypeEnum PropertyType { get; set; }
+
+    public List<Review> Reviews { get; set; }
+    public List<Calendar> Calendars { get; set; }
 }

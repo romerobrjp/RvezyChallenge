@@ -1,4 +1,4 @@
-namespace RvezyWebAPI
+namespace WebAPI
 {
     public class WeatherForecast
     {

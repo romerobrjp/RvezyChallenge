@@ -12,7 +12,8 @@ public class Calendar
 {
     [Required]
     [JsonProperty("listing_id")]
-    public int ListingId { get; set; }
+    public int? ListingId { get; set; }
+    public Listing? Listing { get; set; }
 
     [Required]
     public DateTime? Date { get; set; }
