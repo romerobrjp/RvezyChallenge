@@ -1,31 +1,43 @@
-﻿using Newtonsoft.Json;
+﻿using CsvHelper.Configuration.Attributes;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Infra.Data.Models;
-public class Review
+public class Review : BaseEntity
 {
-    [Required]
-    public long Id { get; set; }
+  public Review()
+  {
+  }
 
-    [Required]
-    [JsonProperty("listing_id")]
-    public int? ListingId { get; set; }
-    public Listing? Listing { get; set; }
+  public Review(long Id, long ListingId, long ReviewerId, string ReviewerName, string Comments, string Date)
+  {
+    this.Id = Id;
+    this.ListingId = ListingId;
+    this.ReviewerId = ReviewerId;
+    this.ReviewerName = ReviewerName;
+    this.Comments = Comments;
+    this.Date = DateTime.Parse(Date);
+  }
 
-    [Required]
-    public DateTime? Date { get; set; }
+  [JsonProperty("listing_id")]
+  public long ListingId { get; set; }
+  public Listing Listing { get; set; }
 
-    [Required]
-    [JsonProperty("reviewer_id")]
-    public long ReviwerId { get; set; }
+  [JsonProperty("reviewer_id")]
+  public long ReviewerId { get; set; }
 
-    [JsonProperty("reviewer_name")]
-    public string? ReviewerName { get; set; }
+  [JsonProperty("reviewer_name")]
+  public string ReviewerName { get; set; }
 
-    public string? Comments { get; set; }
+  [JsonProperty("comments")]
+  public string Comments { get; set; }
+
+  [JsonProperty("date")]
+  public DateTime Date { get; set; }
 }

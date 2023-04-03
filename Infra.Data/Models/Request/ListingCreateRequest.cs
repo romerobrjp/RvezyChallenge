@@ -1,20 +1,17 @@
-﻿using CsvHelper.Configuration.Attributes;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Infra.Data.Models;
+namespace Infra.Data.Models.Request;
 
-public class Listing : BaseEntity
+public class ListingCreateRequest
 {
-  public Listing()
-  {
-  }
-
+  [JsonProperty("id")]
+  public long Id { get; set; }
+  
   [JsonProperty("listing_url")]
   public string? ListingUrl { get; set; }
 
@@ -25,10 +22,5 @@ public class Listing : BaseEntity
   public string Description { get; set; }
 
   [JsonProperty("property_type")]
-  //public PropertyTypes PropertyType { get; set; }
   public string PropertyType { get; set; }
-
-  public List<Review>? Reviews { get; set; }
-
-  public List<Calendar>? Calendars { get; set; }
 }

@@ -2,24 +2,31 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Infra.Data.Models;
 
-public class Calendar
+public class Calendar : BaseEntity
 {
-    [Required]
-    [JsonProperty("listing_id")]
-    public int? ListingId { get; set; }
-    public Listing? Listing { get; set; }
+  public Calendar()
+  {
+  }
 
-    [Required]
-    public DateTime? Date { get; set; }
+  [Key]
+  [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+  public override long? Id { get; set; }
 
-    [Required]
-    public bool Available { get; set; } = true;
+  public long ListingId { get; set; }
 
-    public float Price { get; set; } = 0f;
+  public Listing Listing { get; set; }
+
+  public DateTime Date { get; set; }
+
+  public bool Available { get; set; } = true;
+
+  [Column(TypeName = "decimal(18,4)")]
+  public decimal Price { get; set; } = 0m;
 }

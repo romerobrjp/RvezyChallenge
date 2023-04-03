@@ -15,125 +15,73 @@ namespace Infra.Data.Repositories;
 
 public class BaseRepository<T> : IBaseRepository<T> where T : BaseEntity
 {
-    protected readonly SqlServerContext context;
-    protected readonly DbSet<T> dbset;
-    protected readonly IConfiguration configuration;
+  protected readonly MainDbContext dbContext;
+  protected readonly DbSet<T> dbSet;
 
-    public T Insert(T obj)
+  public BaseRepository(MainDbContext dbContext)
+  {
+    this.dbContext = dbContext;
+    this.dbSet = this.dbContext.Set<T>();
+  }
+
+  public async Task<T> Insert(T obj)
+  {
+    try
     {
-        try
-        {
-            dbset.Add(obj);
-            context.SaveChanges();
-            return obj;
-        }
-        catch (Exception ex)
-        {
-            throw ex;
-        }
+      await this.dbSet.AddAsync(obj);
+      await this.dbContext.SaveChangesAsync();
+      return obj;
+    }
+    catch (Exception)
+    {
+      throw;
+    }
+  }
+
+  public async Task<T> Update(long id, T obj)
+  {
+    var result = await dbSet.AsNoTracking().SingleOrDefaultAsync(b => b.Id == id);
+
+    if (result != null)
+    {
+      try
+      {
+        dbContext.Entry(result).CurrentValues.SetValues(obj);
+        dbContext.Entry(obj).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+        dbContext.SaveChanges();
+      }
+      catch (Exception)
+      {
+        throw new Exception($"Couldn't update entity. ID {obj.Id} not found in database.");
+      }
     }
 
-    public T Update(T obj)
+    return result;
+  }
+
+  public async Task<bool> Delete(long id)
+  {
+    var result = dbSet.SingleOrDefault(i => i.Id.Equals(id));
+
+    try
     {
-        if (!Exists(obj.Id)) return null;
+      if (result != null)
+      {
+        dbSet.Remove(result);
+        return await dbContext.SaveChangesAsync() > 0;
+      }
 
-        var result = dbset.AsNoTracking().SingleOrDefault(b => b.Id == obj.Id);
-
-        if (result != null)
-        {
-            try
-            {
-                context.Entry(result).CurrentValues.SetValues(obj);
-                context.Entry(obj).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-                context.SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        return result;
+      return false;
     }
-
-    public void Delete(int id)
+    catch (Exception)
     {
-        var result = dbset.SingleOrDefault(i => i.Id.Equals(id));
-
-        try
-        {
-            if (result != null)
-            {
-                dbset.Remove(result);
-                context.SaveChanges();
-            }
-        }
-        catch (Exception ex)
-        {
-            throw ex;
-        }
+      throw new Exception($"Couldn't delete entity: ID {id} not found in database.");
     }
+  }
 
-    public T SelectById(int id)
-    {
-        return dbset.Find(id);
-    }
+  public async Task<T> GetById(long id) => await dbSet.FindAsync(id);
 
-    public IList<T> SelectAll()
-    {
-        return dbset.ToList<T>();
-    }
+  public IQueryable<T> GetAll() => dbSet.AsQueryable<T>();
 
-    public bool Exists(long? id)
-    {
-        return dbset.Any(b => b.Id.Equals(id));
-    }
-
-    public EntityFilter ListFiltered(EntityFilter filter)
-    {
-        string query = "";
-        string sqlSelect = $"SELECT * FROM {filter.TableName} ";
-        string sqlWhere = "";
-        string sqlOrderBy = $"ORDER BY {filter.SortField} {filter.SortOrder} ";
-        string sqlOffset = $"OFFSET {filter.Offset} ROWS ";
-        string sqlLimit = $"FETCH NEXT {filter.PageSize} ROWS ONLY";
-
-        if (filter.FieldsDictionary.Count > 0)
-        {
-            sqlWhere += "WHERE ";
-
-            for (int i = 0; i < filter.FieldsDictionary.Count; i++)
-            {
-                string propName = filter.FieldsDictionary.Keys.ElementAt(i);
-                string propValue = filter.FieldsDictionary[filter.FieldsDictionary.Keys.ElementAt(i)].ToString();
-
-                if (propValue.GetType() == typeof(string))
-                {
-                    sqlWhere = String.Concat(sqlWhere, ($"{propName} LIKE '%{propValue}%' "));
-                }
-                else
-                {
-                    sqlWhere = String.Concat(sqlWhere, ($"{propName} = {propValue} "));
-                }
-
-                if (i + 1 < filter.FieldsDictionary.Count)
-                {
-                    sqlWhere = String.Concat(sqlWhere, " AND ");
-                }
-            }
-        }
-
-        query = sqlSelect + sqlWhere + sqlOrderBy + sqlOffset + sqlLimit;
-
-        using (SqlConnection conn = new SqlConnection(configuration.GetConnectionString("DefaultConnection")))
-        {
-            conn.Open();
-
-            filter.Rows = conn.Query<T>(query).AsList();
-
-            conn.Close();
-
-            return filter;
-        }
-    }
+  public async Task<bool> Exists(long? id) => await dbSet.AnyAsync(b => b.Id.Equals(id));
 }
