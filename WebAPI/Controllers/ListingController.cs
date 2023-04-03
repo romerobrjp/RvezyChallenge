@@ -1,4 +1,5 @@
 ﻿using Business.Services.Interfaces;
+using Infra.Data.DTOs;
 using Infra.Data.Models;
 using Infra.Data.Models.Request;
 using Microsoft.AspNetCore.Mvc;
@@ -82,6 +83,48 @@ public class ListingController : ControllerBase
     try
     {
       bool result = await _listingService.Delete(id);
+      return Ok(result);
+    }
+    catch (Exception ex)
+    {
+      return StatusCode((int)HttpStatusCode.InternalServerError, ex.Message);
+    }
+  }
+
+  /// <summary>
+  /// Perform a refined search
+  /// </summary>
+  /// 
+  /// <remarks>
+  /// Sample request:
+  ///
+  ///     POST /list-filtered
+  ///     {
+  ///       "tableName": "listings",
+  ///       "offset": 0,
+  ///       "pageNumber": 1,
+  ///       "pageSize": 1,
+  ///       "fieldsDictionary": {},
+  ///       "sortField": "name",
+  ///       "sortOrder": "asc",
+  ///     }
+  ///
+  /// </remarks>
+  /// 
+  /// <returns>FilterDtO</returns>
+  /// 
+  /// <response code="200">Ok</response>
+  /// <response code="400">One or more validation errors occurred</response>
+  // POST api/<ListingController>/list-filtered
+  [HttpPost("list-filtered")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+  public IActionResult ListFiltered([FromBody] FilterDTO requestData)
+  {
+    try
+    {
+      FilterDTO result = _listingService.ListFiltered(requestData);
       return Ok(result);
     }
     catch (Exception ex)

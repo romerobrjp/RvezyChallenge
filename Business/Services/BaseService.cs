@@ -1,4 +1,5 @@
 ﻿using Business.Services.Interfaces;
+using Infra.Data.DTOs;
 using Infra.Data.Models;
 using Infra.Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -41,4 +42,6 @@ public class BaseService<T> : IBaseService<T> where T : BaseEntity
 
     return await _repository.Delete(id);
   }
+
+  public FilterDTO ListFiltered(FilterDTO filter) => _repository.ListFiltered(filter);
 }

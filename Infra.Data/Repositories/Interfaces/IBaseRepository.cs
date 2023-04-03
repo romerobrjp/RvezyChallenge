@@ -1,4 +1,5 @@
-﻿using Infra.Data.Models;
+﻿using Infra.Data.DTOs;
+using Infra.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,4 +16,5 @@ public interface IBaseRepository<T> where T : BaseEntity
   Task<T> GetById(long id);
   IQueryable<T> GetAll();
   Task<bool> Exists(long? id);
+  FilterDTO ListFiltered(FilterDTO filter);
 }

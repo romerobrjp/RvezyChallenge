@@ -1,4 +1,5 @@
-﻿using Infra.Data.Models;
+﻿using Infra.Data.DTOs;
+using Infra.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,4 +15,5 @@ public interface IBaseService<T> where T : BaseEntity
   Task<T> Create(T obj);
   Task<T> Update(long id, T obj);
   Task<bool> Delete(long id);
+  FilterDTO ListFiltered(FilterDTO filter);
 }

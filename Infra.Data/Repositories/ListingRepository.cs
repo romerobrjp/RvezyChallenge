@@ -12,7 +12,10 @@ using System.Threading.Tasks;
 namespace Infra.Data.Repositories;
 public class ListingRepository : BaseRepository<Listing>, IListingRepository
 {
-  public ListingRepository(MainDbContext dbContext) : base(dbContext)
+  private new readonly IConfiguration configuration;
+
+  public ListingRepository(MainDbContext dbContext, IConfiguration configuration) : base(dbContext, configuration)
   {
+    this.configuration = configuration;
   }
 }

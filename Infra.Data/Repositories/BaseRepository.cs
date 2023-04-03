@@ -1,9 +1,11 @@
 ﻿using Dapper;
+using Infra.Data.DTOs;
 using Infra.Data.Models;
 using Infra.Data.Models.Context;
 using Infra.Data.Repositories.Interfaces;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -17,11 +19,13 @@ public class BaseRepository<T> : IBaseRepository<T> where T : BaseEntity
 {
   protected readonly MainDbContext dbContext;
   protected readonly DbSet<T> dbSet;
+  protected readonly IConfiguration configuration;
 
-  public BaseRepository(MainDbContext dbContext)
+  public BaseRepository(MainDbContext dbContext, IConfiguration configuration)
   {
     this.dbContext = dbContext;
     this.dbSet = this.dbContext.Set<T>();
+    this.configuration = configuration; 
   }
 
   public async Task<T> Insert(T obj)
@@ -84,4 +88,52 @@ public class BaseRepository<T> : IBaseRepository<T> where T : BaseEntity
   public IQueryable<T> GetAll() => dbSet.AsQueryable<T>();
 
   public async Task<bool> Exists(long? id) => await dbSet.AnyAsync(b => b.Id.Equals(id));
+
+  public FilterDTO ListFiltered(FilterDTO filter)
+  {
+    string query = "";
+    string sqlSelect = $"SELECT * FROM {filter.TableName} ";
+    string sqlWhere = "";
+    string sqlOrderBy = $"ORDER BY {filter.SortField} {filter.SortOrder} ";
+    string sqlOffset = $"OFFSET {filter.Offset} ROWS ";
+    string sqlLimit = $"FETCH NEXT {filter.PageSize} ROWS ONLY";
+
+    if (filter.FieldsDictionary.Count > 0)
+    {
+      sqlWhere += "WHERE ";
+
+      for (int i = 0; i < filter.FieldsDictionary.Count; i++)
+      {
+        string propName = filter.FieldsDictionary.Keys.ElementAt(i);
+        string propValue = filter.FieldsDictionary[filter.FieldsDictionary.Keys.ElementAt(i)].ToString();
+
+        if (propValue.GetType() == typeof(string))
+        {
+          sqlWhere = String.Concat(sqlWhere, ($"{propName} LIKE '%{propValue}%' "));
+        }
+        else
+        {
+          sqlWhere = String.Concat(sqlWhere, ($"{propName} = {propValue} "));
+        }
+
+        if (i + 1 < filter.FieldsDictionary.Count)
+        {
+          sqlWhere = String.Concat(sqlWhere, " AND ");
+        }
+      }
+    }
+
+    query = sqlSelect + sqlWhere + sqlOrderBy + sqlOffset + sqlLimit;
+
+    using (SqlConnection conn = new SqlConnection(configuration.GetConnectionString("DefaultConnection")))
+    {
+      conn.Open();
+
+      filter.Rows = conn.Query<T>(query).AsList();
+
+      conn.Close();
+
+      return filter;
+    }
+  }
 }
